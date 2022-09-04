@@ -1,28 +1,51 @@
-class Canvas {
-  constructor(url) {
-    this.can = document.createElement("canvas")
-    this.ctx = this.can.getContext("2d")
-    this.i = new Image();
-    this.i.src = url;
-    this.can.width = this.i.width;
-    this.can.height = this.i.height;
-  }
-  
-  grayscale() {
-    let image = this.ctx.getImageData(0, 0, this.can.width, this.can.height)
-    let data = image.data;
-    
-    for (let i = 0; i < data.length; i+=4) {
-      const sum = data[i] + data[i + 1] + data[i + 2]
-      data[i] = sum / 3
-      data[i + 1] = sum / 3
-      data[i + 2] = sum /3
+function MAN(canvas, callbackfn) {
+    const ctx = canvas.getContext("2d")
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const scanned = imageData.data;
+
+    for (let i = 0; i < scanned.length; i += 4) {
+        const r = scanned[i]
+        const g = scanned[i + 1]
+        const b = scanned[i + 2]
+        const output = callbackfn(r,g,b);
+        scanned[i] = output[0]
+        scanned[i + 1] = output[1]
+        scanned[i + 2] = output[2]
     }
-    image.data = data;
-    ctx.putImageData(image.data, 0, 0)
+
+    imageData.data = scanned;
+    ctx.putImageData(imageData, 0, 0);
+};
+
+function load(url) {
+  const i = new Image(url);
+  
+  return new Promise((resolve,reject) => {
+    i.addEventListener('load', () => {
+      resolve(i)
+    })
+  })
+}
+
+function can(image, style="fit") {
+  const c = document.createElement("canvas");
+  c.width = image.width
+  c.height = image.height
+  if (style == "stretch") {
+    
+    c.drawImage(image, 0, 0)
+  } else {
+    c.drawImage(image, 0, 0, c.width, c.height)
   }
   
-  export(mimetype="image/png") {
-    return this.can.toDataURL(mimetype)
-  }
+  return c.getContext("2d")
+}
+
+function download(context) {
+  const c = context.canvas;
+  const iu = c.toDataURL("image/png")
+  const a = document.createElement("a")
+  a.download = "dl.png"
+  a.href = iu
+  a.click()
 }
